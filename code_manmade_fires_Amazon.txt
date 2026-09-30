@@ -1,5 +1,6 @@
+clear all
 
-
+use "dataset_manmade_fires_Amazon", clear
 
 ***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation
 ***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation
