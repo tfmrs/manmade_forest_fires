@@ -1,0 +1,57 @@
+
+(1) Dependent variables
+(1.a) Elderly health:
+nbed_65_ill_pc4 = bed-days of hospitalization due to illness = ill, age group = over 65, metric: bed-days per 10,000 elderly of the age group
+nbed_ill_group_pc4 = bed-days of hospitalization due to illness = ill, age group = group, metric: bed-days per 10,000 elderly of the age group
+ill = asma (asthma), bro (bronchits) and dpo or dpoc (obstructive pulmonary disease, COPD)
+group = 60 to 64, 65 to 69, 70 to 74, 75 to 79, over 80
+(1.b) Newborn health:
+d_out_0m = relative frequency of outcome = out, lead window = 0 (current time)
+cum_a_d_out_window = relative frequency of outcome out, lead window = window
+out = lbw (low birth weight, < 1,500 g), vlbw (very low birthweight, < 2,500 g), prem (preterm birth, < 37 weeks), svprem (very preterm birth, < 32 weeks).
+window = 1m (current month to 1 month ahead), 2m (current month to 2 months ahead),..., 9m (current month to 9 months ahead).
+(1.c) Pollution
+aod_distk = aerosol optical depth, aggregated within a distance "dist" from municipal capitals
+dist = 25, 50, 100 km
+(2) Covariates
+(2.a) Treament
+ff_up_dist_angle_deg = count of upwind forest fires within a distance "dist" fro municipal capitals, based on a fire angle "angle"
+ff_nup_dist_angle_deg = count of non-upwind forest fires within a distance "dist" fro municipal capitals, based on a fire angle "angle"
+dist = 50, 75 and 100 km
+angle = 45, 60 and 90 degrees
+(2.b) Controls
+pop = Population
+pib = municipal gdp (deflated, in log form)
+inst_medsup = municipal count of inhabitants with education above lower secondary	
+s_fem = municipal share of female population
+idade_media = municipal average age
+urb = municipal share of urban population
+idh = municipal human development index
+mort_m1a = municipal rate of infant mortality
+dnct = municipal count of chronic disease mortality
+medicos = municipal count of physicians
+leitos = municipal count of hospital beds
+amb = municipal count of ambulatories
+pbf = municipal percent enrolled in the Bolsa Família poverty alleviation program
+temp = temperature at municipal capital
+ppt = precipitation (rainfall)
+humidity = air specific humidity
+era5_w = wind direction
+era5_s = wind speed
+temp_sq = temperature squared
+ppt_sq = precipitation squared
+humidity_sq = humidity squared
+era5_w_sq = wind direction squared
+era5_s_sq = wind speed squared
+areakm2 = municipal land area
+frota = municipal vehicle fleet
+road_unp_ext = extension of unpaved roads
+road_pav_ext = extension of paved roads
+d_mes_1-d_mes_12 = monthly dummies
+d_ano_1-d_ano_10 = year dummies
+d_uf_1-d_uf_9 = Amazonian state dummies
+d_rur_a_med = binary for rural population share above the median
+d_for_a_med = binary for forest land share above the median
+int_up_urb_dist_angle = upwind forest fire vs. d_rur_a_med, fire radius = dist, fire angle = angle
+int_up_for_dist_angle = upwind forest fire vs. d_for_a_med, fire radius = dist, fire angle = angle
+
