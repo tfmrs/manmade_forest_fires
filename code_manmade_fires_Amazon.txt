@@ -1,0 +1,569 @@
+
+
+
+***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation
+***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation
+***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation***************************(1) Pollution Estimation
+
+
+ 
+**********(1.a) fire radius = 50k
+foreach var in "aod_25k" "aod_50k" "aod_100k"  {
+xtreg `var' ff_up_50k_45deg ff_nup_50k_45deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+estimates store pol_`var'
+}
+esttab pol_* using "trial_1_23_09_pollution_FF.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+**********(1.b) fire radius = 75k
+foreach var in "aod_25k" "aod_50k" "aod_100k"  {
+xtreg `var' ff_up_75k_45deg ff_nup_75k_45deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+estimates store pol_`var'
+}
+esttab pol_* using "trial_1_23_09_pollution_75k_FF.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+
+**********(1.c) fire radius = 100k
+foreach var in "aod_25k" "aod_50k" "aod_100k"  {
+xtreg `var' ff_up_100k_45deg ff_nup_100k_45deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+estimates store pol_`var'
+}
+esttab pol_* using "trial_1_23_09_pollution_100k_FF.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+
+***************************(2) Elderly Health***************************(2) Elderly Health***************************(2) Elderly Health***************************(2) Elderly Health
+***************************(2) Elderly Health***************************(2) Elderly Health***************************(2) Elderly Health***************************(2) Elderly Health
+***************************(2) Elderly Health***************************(2) Elderly Health***************************(2) Elderly Health***************************(2) Elderly Health
+
+
+capture drop rollmat
+capture scalar drop _all
+   
+**********(2.b) nbed per 10^4 members of the relevant group, asma refined ages [18/09/26]
+estimates clear
+foreach dist in "50" "75" "100" {
+foreach var of varlist nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4-nbed_dpoc_a80_pc4 {
+*foreach var of varlist nbed_65_asma_pc4 nbed_65_bro_pc4 {
+dis "`var'"
+xtreg `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+local name = substr("nbel_`var'",1,20)
+dis "`name'"
+estimates store `name'
+}
+esttab nbel_* using "trial_1_18_09_nbed_finer_elder_FF_pc4_`dist'k.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4 nbed_bro_60_64_pc4 nbed_dpo_60_64_pc4 nbed_asma_65_69_pc4 nbed_bro_65_69_pc4 nbed_dpo_65_69_pc4 nbed_asma_70_74_pc4 nbed_bro_70_74_pc4 nbed_dpo_70_74_pc4 nbed_asma_75_79_pc4 nbed_bro_75_79_pc4 nbed_dpo_75_79_pc4 nbed_asma_a80_pc4 nbed_bro_a80_pc4 nbed_dpo_a80_pc4
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "F p-val"
+dis "ratio_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+}
+
+
+
+**********(2.b) WITH LOG nbed per 10^4 members of the relevant group, asma refined ages [18/09/26]
+estimates clear
+
+foreach dist in "50" "75" "100" {
+foreach var of varlist nbed_65_asma_pc4_l nbed_65_bro_pc4_l nbed_65_dpo_pc4_l nbed_asma_60_64_pc4_l-nbed_dpoc_a80_pc4_l {
+
+dis "`var'"
+xtreg `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+
+local name = substr("nbel_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+}
+esttab nbel_* using "trial_1_18_09_nbed_finer_elder_FF_pc4_logY_`dist'k.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4 nbed_bro_60_64_pc4 nbed_dpo_60_64_pc4 nbed_asma_65_69_pc4 nbed_bro_65_69_pc4 nbed_dpo_65_69_pc4 nbed_asma_70_74_pc4 nbed_bro_70_74_pc4 nbed_dpo_70_74_pc4 nbed_asma_75_79_pc4 nbed_bro_75_79_pc4 nbed_dpo_75_79_pc4 nbed_asma_a80_pc4 nbed_bro_a80_pc4 nbed_dpo_a80_pc4
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "F p-val"
+dis "ratio_logged_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+}
+
+log using "log_revised_nbed_MPL_only_19_09_26.txt", text replace
+
+capture mat drop rollmat
+
+
+foreach var of varlist d_nbed_65_asma d_nbed_65_bro d_nbed_65_dpo d_nbed_asma_60_64-d_nbed_dpoc_a80 {
+describe `var'
+}
+
+**********(2.b) LPM-FE nbed BINARY, asma, BRO, DPOC, refined ages [18/09/26]
+foreach dist in "50" "75" "100" {
+foreach var of varlist d_nbed_65_asma d_nbed_65_bro d_nbed_65_dpo d_nbed_asma_60_64-d_nbed_dpoc_a80 {
+estimates clear
+
+dis "`var'"
+xtreg `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+local name = substr("npro_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+}
+esttab npro_* using "trial_1_18_09_nbed_finer_elder_FF_mpl_`dist'k.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4 nbed_bro_60_64_pc4 nbed_dpo_60_64_pc4 nbed_asma_65_69_pc4 nbed_bro_65_69_pc4 nbed_dpo_65_69_pc4 nbed_asma_70_74_pc4 nbed_bro_70_74_pc4 nbed_dpo_70_74_pc4 nbed_asma_75_79_pc4 nbed_bro_75_79_pc4 nbed_dpo_75_79_pc4 nbed_asma_a80_pc4 nbed_bro_a80_pc4 nbed_dpo_a80_pc4
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "F p-val"
+dis "MPL_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+}
+
+
+**********(2.b) XTPROBIT-RE nbed BINARY, asma, BRO, DPOC, refined ages [18/09/26]
+*OBS: no need for tlist (repeats other lists)
+*too slow
+capture drop mat rollmat
+capture scalar drop _all
+estimates clear
+
+foreach dist in "50" "75" "100" {
+foreach var of varlist d_nbed_65_asma d_nbed_65_bro d_nbed_65_dpo d_nbed_asma_60_64-d_nbed_dpoc_a80 {
+
+dis "`var'"
+xtprobit `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg $dlist $wlist $dumm $tlist, re vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_m) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*normal((-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*normal((-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+
+local name = substr("npro_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+}
+esttab npro_* using "trial_1_18_09_nbed_finer_elder_xtprobit_`dist'k.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4 nbed_bro_60_64_pc4 nbed_dpo_60_64_pc4 nbed_asma_65_69_pc4 nbed_bro_65_69_pc4 nbed_dpo_65_69_pc4 nbed_asma_70_74_pc4 nbed_bro_70_74_pc4 nbed_dpo_70_74_pc4 nbed_asma_75_79_pc4 nbed_bro_75_79_pc4 nbed_dpo_75_79_pc4 nbed_asma_a80_pc4 nbed_bro_a80_pc4 nbed_dpo_a80_pc4
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "F p-val"
+dis "probit_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+}
+
+
+***************************(3) Newborn Health***************************(3) Newborn Health***************************(3) Newborn Health***************************(3) Newborn Health
+***************************(3) Newborn Health***************************(3) Newborn Health***************************(3) Newborn Health***************************(3) Newborn Health
+***************************(3) Newborn Health***************************(3) Newborn Health***************************(3) Newborn Health***************************(3) Newborn Health
+
+********************Newborn
+capture log close
+capture mat drop rollmat
+
+**********(3) LBW 
+estimates clear
+foreach dist in "50" "75" "100" {
+foreach var in  "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw_0m" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m" {
+
+dis "`var'"
+xtreg `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg $dlist $wlist $dumm $tlist if m_`var' == 0, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+local name = substr("xte_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+
+}
+
+esttab xte_* using "trial_1_25_09_newborn_FF_`dist'k.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw0" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m"
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "F p-val"
+
+dis "BW_xte_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+
+
+}
+
+
+********************Newborn log
+
+******log gen
+
+foreach var in "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw_0m" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m" {
+sum `var'
+dis "without log"
+dis r(sd)/r(mean)
+gen `var'_l = log(1+`var')
+gen d_`var' = 0
+replace d_`var' = 1 if `var' > 0
+sum `var'_l
+dis "with log"
+dis r(sd)/r(mean)
+}
+
+
+**********(3) LBW 
+
+estimates clear
+foreach dist in "50" "75" "100" {
+foreach var in "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw_0m" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m" {
+
+*local ifvar = "m_"regexr("`var'","_l","")
+xtreg `var'_l ff_up_`dist'k_45deg ff_nup_`dist'k_45deg $dlist $wlist $dumm $tlist if m_`var' == 0, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+local name = substr("xte_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+
+}
+
+esttab xte_* using "trial_1_25_09_newborn_FF_`dist'k_log.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = "d_lbw_0m_l" "cum_a_d_lbw_1m_l" "cum_a_d_lbw_2m_l" "cum_a_d_lbw_3m_l" "cum_a_d_lbw_4m_l" "cum_a_d_lbw_5m_l" "cum_a_d_lbw_6m_l" "cum_a_d_lbw_7m_l" "cum_a_d_lbw_8m_l" "cum_a_d_lbw_9m_l" "d_vlbw_0m_l" "cum_a_d_vlbw_1m_l" "cum_a_d_vlbw_2m_l" "cum_a_d_vlbw_3m_l" "cum_a_d_vlbw_4m_l" "cum_a_d_vlbw_5m_l" "cum_a_d_vlbw_6m_l" "cum_a_d_vlbw_7m_l" "cum_a_d_vlbw_8m_l" "cum_a_d_vlbw_9m_l"  "d_prem_0m_l" "cum_a_d_prem_1m_l" "cum_a_d_prem_2m_l" "cum_a_d_prem_3m_l" "cum_a_d_prem_4m_l" "cum_a_d_prem_5m_l" "cum_a_d_prem_6m_l" "cum_a_d_prem_7m_l" "cum_a_d_prem_8m_l" "cum_a_d_prem_9m_l"  "d_svprem_0m_l" "cum_a_d_svprem_1m_l" "cum_a_d_svprem_2m_l" "cum_a_d_svprem_3m_l" "cum_a_d_svprem_4m_l" "cum_a_d_svprem_5m_l" "cum_a_d_svprem_6m_l" "cum_a_d_svprem_7m_l" "cum_a_d_svprem_8m_l" "cum_a_d_svprem_9m_l"
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "F p-val"
+
+dis "BW_log_xte_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+
+
+}
+
+
+***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment
+***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment
+***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment***************************(4) Heterogeneity Assessment
+
+codebook rur_pop_share
+
+gen d_rur_a_med = 0
+replace d_rur_a_med = 1 if rur_pop_share > 0.434093
+
+codebook forest_share
+
+gen d_for_a_med = 0
+replace d_for_a_med = 1 if forest_share > 0.59124
+
+gen int_up_rur_50_45 = ff_up_50k_45deg * d_rur_a_med
+gen int_up_rur_50_60 = ff_up_50k_60deg * d_rur_a_med
+gen int_up_rur_50_90 = ff_up_50k_90deg * d_rur_a_med
+
+gen int_up_rur_75_45 = ff_up_75k_45deg * d_rur_a_med
+gen int_up_rur_75_60 = ff_up_75k_60deg * d_rur_a_med
+gen int_up_rur_75_90 = ff_up_75k_90deg * d_rur_a_med
+
+gen int_up_rur_100_45 = ff_up_100k_45deg * d_rur_a_med
+gen int_up_rur_100_60 = ff_up_100k_60deg * d_rur_a_med
+gen int_up_rur_100_90 = ff_up_100k_90deg * d_rur_a_med
+
+gen ts_d_rur = d_rur_a_med * time_num
+
+
+* up vs for
+
+gen int_up_for_50_45 = ff_up_50k_45deg * d_for_a_med
+gen int_up_for_50_60 = ff_up_50k_60deg * d_for_a_med
+gen int_up_for_50_90 = ff_up_50k_90deg * d_for_a_med
+
+gen int_up_for_75_45 = ff_up_75k_45deg * d_for_a_med
+gen int_up_for_75_60 = ff_up_75k_60deg * d_for_a_med
+gen int_up_for_75_90 = ff_up_75k_90deg * d_for_a_med
+
+gen int_up_for_100_45 = ff_up_100k_45deg * d_for_a_med
+gen int_up_for_100_60 = ff_up_100k_60deg * d_for_a_med
+gen int_up_for_100_90 = ff_up_100k_90deg * d_for_a_med
+
+gen ts_d_for = d_for_a_med * time_num
+
+*save "dataset_manmade_fires_Amazon.dta", replace
+
+**************NBED
+
+*****heterog in rur
+capture log close
+*log using "log_revised_nbed_heterog_22_09.txt", text replace
+log using "log_revised_nbed_heterog_22_09_18h22.txt", text replace
+
+estimates clear
+foreach heterog in "rur" "for" {
+foreach dist in "50" "75" "100" {
+foreach var of varlist nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4-nbed_dpoc_a80_pc4 {
+
+dis "`var'"
+xtreg `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg int_up_`heterog'_`dist'_45 $dlist $wlist $dumm $tlist  ts_d_`heterog', fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+*scalar pval_int = 2*t(df_right,(-1)*abs(coeff[1,3]/sqrt(vcov[3,3])))
+
+scalar est_rur = coeff[1,1] + coeff[1,3]
+scalar se_rur = sqrt(vcov[1,1] + vcov[3,3] + 2*vcov[1,3])
+scalar pval_rur = 2*t(df_right,(-1)*abs(est_rur/se_rur))
+*this is also valid for forested
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, est_rur, se_rur, pval_rur, e(p)
+
+local name = substr("he_`heterog'_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+
+}
+
+esttab he_* using "trial_1_22_09_NBED_FF_`dist'k_hetero_`heterog'.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+matrix rownames rollmat = nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4 nbed_bro_60_64_pc4 nbed_dpo_60_64_pc4 nbed_asma_65_69_pc4 nbed_bro_65_69_pc4 nbed_dpo_65_69_pc4 nbed_asma_70_74_pc4 nbed_bro_70_74_pc4 nbed_dpo_70_74_pc4 nbed_asma_75_79_pc4 nbed_bro_75_79_pc4 nbed_dpo_75_79_pc4 nbed_asma_a80_pc4 nbed_bro_a80_pc4 nbed_dpo_a80_pc4
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "est." "se" "pval" "F p-val"
+
+dis "nbed_xte_`for'_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+estimates clear
+
+
+}
+}
+
+
+
+
+**************newborn
+
+*****heterog in rur
+capture log close
+capture drop mat rollmat
+*log using "log_revised_newborn_heterog_22_09.txt", text replace
+*log using "log_revised_newborn_heterog_22_09_18h22.txt", text replace
+*log using "log_revised_newborn_heterog_25_09_09h51.txt", text replace
+log using "log_revised_newborn_heterog_25_09_13h28.txt", text replace
+
+estimates clear
+
+
+foreach heterog in "rur" "for" {
+foreach dist in "50" "75" "100" {
+foreach var in "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw_0m" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m" {
+
+
+dis "`var'"
+xtreg `var' ff_up_`dist'k_45deg ff_nup_`dist'k_45deg int_up_`heterog'_`dist'_45 $dlist $wlist $dumm $tlist  ts_d_`heterog' if m_`var' == 0, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+*scalar pval_int = 2*t(df_right,(-1)*abs(coeff[1,3]/sqrt(vcov[3,3])))
+
+scalar est_rur = coeff[1,1] + coeff[1,3]
+scalar se_rur = sqrt(vcov[1,1] + vcov[3,3] + 2*vcov[1,3])
+scalar pval_rur = 2*t(df_right,(-1)*abs(est_rur/se_rur))
+*this is also valid for forested
+
+mat rollmat = nullmat(rollmat) \ coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, est_rur, se_rur, pval_rur, e(p)
+
+local name = substr("he_`heterog'_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+
+}
+
+*esttab he_* using "trial_1_22_09_newborn_FF_`dist'k_hetero_`heterog'.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+esttab he_* using "trial_1_25_09_newborn_FF_`dist'k_hetero_`heterog'.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+
+matrix rownames rollmat = "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw_0m" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m" 
+matrix colnames rollmat = "est." "se" "pval" "est." "se" "pval" "est." "se" "pval" "F p-val"
+
+dis "BW_xte_`for'_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+estimates clear
+
+
+}
+}
+
+
+***************************(5) Robustness***************************(5) Robustness***************************(5) Robustness***************************(5) Robustness
+***************************(5) Robustness***************************(5) Robustness***************************(5) Robustness***************************(5) Robustness
+***************************(5) Robustness***************************(5) Robustness***************************(5) Robustness***************************(5) Robustness
+
+
+**********(1) NBED, nbed per 10^4 members of the relevant group, asma refined ages [18/09/26]
+estimates clear
+capture mat drop rollmat
+capture log close
+log using "log_revised_nbed_angle_rob_29_09_26.txt", text replace
+
+foreach angle in 45 60 90 {
+*foreach var of varlist nbed_65_asma_pc4 nbed_65_bro_pc4 nbed_65_dpo_pc4 nbed_asma_60_64_pc4-nbed_dpoc_a80_pc4 {
+foreach var of varlist nbed_65_asma_pc4 nbed_asma_60_64_pc4 nbed_asma_65_69_pc4 nbed_asma_70_74_pc4 nbed_asma_75_79_pc4 nbed_asma_a80_pc4 {
+
+dis "`var'"
+xtreg `var' ff_up_50k_`angle'deg ff_nup_50k_`angle'deg $dlist $wlist $dumm $tlist, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ `angle', coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+local name = substr("nbel_`var'",1,20)
+dis "`name'"
+estimates store `name'
+}
+esttab nbel_* using "trial_1_29_09_nbed_finer_elder_FF_pc4_50k_`angle'_deg.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+}
+
+matrix rownames rollmat = nbed_65_asma_pc4 nbed_asma_60_64_pc4 nbed_asma_65_69_pc4 nbed_asma_70_74_pc4 nbed_asma_75_79_pc4 nbed_asma_a80_pc4 nbed_65_asma_pc4 nbed_asma_60_64_pc4 nbed_asma_65_69_pc4 nbed_asma_70_74_pc4 nbed_asma_75_79_pc4 nbed_asma_a80_pc4 nbed_65_asma_pc4 nbed_asma_60_64_pc4 nbed_asma_65_69_pc4 nbed_asma_70_74_pc4 nbed_asma_75_79_pc4 nbed_asma_a80_pc4
+matrix colnames rollmat = "angle" "est." "se" "pval" "est." "se" "pval" "F p-val"
+
+dis "ratio_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+log close
+
+
+**********(3) LBW 
+estimates clear
+capture mat drop rollmat
+capture log close
+log using "log_revised_LBW_angle_rob_29_09_26.txt", text replace
+
+
+foreach angle in 45 60 90 {
+*foreach var in  "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_vlbw_0m" "cum_a_d_vlbw_1m" "cum_a_d_vlbw_2m" "cum_a_d_vlbw_3m" "cum_a_d_vlbw_4m" "cum_a_d_vlbw_5m" "cum_a_d_vlbw_6m" "cum_a_d_vlbw_7m" "cum_a_d_vlbw_8m" "cum_a_d_vlbw_9m"  "d_prem_0m" "cum_a_d_prem_1m" "cum_a_d_prem_2m" "cum_a_d_prem_3m" "cum_a_d_prem_4m" "cum_a_d_prem_5m" "cum_a_d_prem_6m" "cum_a_d_prem_7m" "cum_a_d_prem_8m" "cum_a_d_prem_9m"  "d_svprem_0m" "cum_a_d_svprem_1m" "cum_a_d_svprem_2m" "cum_a_d_svprem_3m" "cum_a_d_svprem_4m" "cum_a_d_svprem_5m" "cum_a_d_svprem_6m" "cum_a_d_svprem_7m" "cum_a_d_svprem_8m" "cum_a_d_svprem_9m" {
+foreach var in  "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" {
+
+dis "`var'"
+xtreg `var' ff_up_50k_`angle'deg ff_nup_50k_`angle'deg $dlist $wlist $dumm $tlist if m_`var' == 0, fe vce(cluster geocodig_m)
+
+mat coeff = e(b)
+mat vcov = e(V)
+scalar k_param = e(df_b) + 1
+scalar df_right = e(N_clust) - k_param
+
+scalar pval_up = 2*t(df_right,(-1)*abs(coeff[1,1]/sqrt(vcov[1,1])))
+scalar pval_nup = 2*t(df_right,(-1)*abs(coeff[1,2]/sqrt(vcov[2,2])))
+
+mat rollmat = nullmat(rollmat) \ `angle', coeff[1,1], vcov[1,1]^(1/2), pval_up, coeff[1,2], vcov[2,2]^(1/2), pval_nup, e(p)
+
+local name = substr("xte_`var'",1,20)
+dis "`name'"
+estimates store `name'
+
+
+}
+
+esttab xte_* using "trial_1_29_09_newborn_FF_50k_`angle'_deg.txt", se scalars(N chi2 F ll ll_0 p r2_a r2_o r2_w r2_b N_clust) nolines nogaps star(+ 0.10 * 0.05 ** 0.01 *** 0.001) varwidth(41) replace
+
+
+}
+
+
+matrix rownames rollmat = "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" "d_lbw_0m" "cum_a_d_lbw_1m" "cum_a_d_lbw_2m" "cum_a_d_lbw_3m" "cum_a_d_lbw_4m" "cum_a_d_lbw_5m" "cum_a_d_lbw_6m" "cum_a_d_lbw_7m" "cum_a_d_lbw_8m" "cum_a_d_lbw_9m" 
+matrix colnames rollmat = "angle" "est." "se" "pval" "est." "se" "pval" "F p-val"
+
+dis "BW_xte_`dist'"
+mat list rollmat
+
+scalar drop _all
+mat drop rollmat
+
+log close
